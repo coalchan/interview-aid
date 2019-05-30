@@ -12,16 +12,11 @@
     <artifactId>interview-core</artifactId>
 
     <dependencies>
+        <!-- apache commons -->
         <dependency>
-            <groupId>io.github.biezhi</groupId>
-            <artifactId>wechat-api</artifactId>
-            <version>1.0.6</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.7</version>
         </dependency>
 
         <!-- lombok -->

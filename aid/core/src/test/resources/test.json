@@ -10,12 +10,12 @@
           "desc": "Java 虚拟机相关基础知识，包括 Java 是什么等。",
           "children": [
             {
-              "id": 1,
+              "id": "1",
               "title": "Java 是啥？",
               "solution": "Java 就是爪哇！"
             },
             {
-              "id": 2,
+              "id": "2",
               "title": "爪哇是啥？",
               "solution": "爪哇就是 Java"
             }
