@@ -4,6 +4,7 @@ import com.luckypeng.interview.core.model.Content;
 import com.luckypeng.interview.core.util.AssertionUtils;
 import com.luckypeng.interview.core.util.ContentUtils;
 import com.luckypeng.interview.core.util.ObjectUtils;
+import lombok.Getter;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.Set;
  * @since 1.0
  */
 public class Aid {
+    @Getter
     private Content content;
 
     private static final String SEPARATOR_PATH = "-";
