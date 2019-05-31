@@ -28,6 +28,11 @@ public class Content {
     private String id;
 
     /**
+     * 路径，唯一标识
+     */
+    private String path;
+
+    /**
      * 标题
      */
     private String title;
@@ -62,9 +67,10 @@ public class Content {
      */
     private Map<String, Content> children = new HashMap<>(16);
 
-    public Content(ContentType type, String id, String title) {
+    public Content(ContentType type, String id, String path, String title) {
         this.type = type;
         this.id = id;
+        this.path = path;
         this.title = title;
     }
 }

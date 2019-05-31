@@ -61,20 +61,21 @@ public class ContentUtils {
 
     /**
      * 递归读取文件
-     * @param contents
+     * @param directory
      * @throws IOException
      */
-    public static Content recursionListContents(File contents, String parentId) throws IOException {
-        File readmeFile = new File(contents.getAbsolutePath() + File.separator + README_FILE_NAME);
-        AssertionUtils.isTrue(readmeFile.exists(), "文件夹中没有包含 README.md 文件: " + contents.getName());
-        Content content = readFile(readmeFile, parentId);
-        File[] files = contents.listFiles((dir, name) -> !README_FILE_NAME.equals(name));
+    public static Content recursionListContents(File directory, String path) throws IOException {
+        File readmeFile = new File(directory.getAbsolutePath() + File.separator + README_FILE_NAME);
+        AssertionUtils.isTrue(readmeFile.exists(), "文件夹中没有包含 README.md 文件: " + directory.getName());
+        Content content = readFile(readmeFile, path);
+        File[] files = directory.listFiles((dir, name) -> !README_FILE_NAME.equals(name));
         for (File file : files) {
             if (file.isFile()) {
-                Content child = readFile(file, parentId);
+                Content child = readFile(file, path);
                 content.getChildren().put(child.getId(), child);
             } else {
-                content.getChildren().put(getId(file.getName()), recursionListContents(file, getId(file.getName())));
+                content.getChildren().put(getId(file.getName()),
+                        recursionListContents(file, concatPath(path, file)));
             }
         }
         return content;
@@ -83,10 +84,11 @@ public class ContentUtils {
     /**
      * 解析文件
      * @param file
+     * @param path
      * @return
      * @throws IOException
      */
-    public static Content readFile(File file, String parentId) throws IOException {
+    public static Content readFile(File file, String path) throws IOException {
         int exerciseNum = -1;
         boolean isREADME = README_FILE_NAME.equals(file.getName());
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -108,7 +110,9 @@ public class ContentUtils {
                     throw new RuntimeException("文件没有标准的文件头");
                 } else if (isREADME) {
                     // 读取 README 文档的正文部分
-                    content.setId(parentId);
+                    String[] array = path.split(SEPARATOR_FILE_NAME);
+                    content.setId(array[array.length - 1]);
+                    content.setPath(path);
                     content.setType(ContentType.DIR);
                     if (content.getRawText() == null && !line.isEmpty()) {
                         content.setRawText(line);
@@ -118,19 +122,21 @@ public class ContentUtils {
                 } else {
                     // 读取普通文档的正文部分，即习题部分
                     content.setId(getId(file.getName()));
+                    content.setPath(concatPath(path, file));
                     content.setType(ContentType.FILE);
 
                     if (line.startsWith(EXERCISE_START)) {
                         exerciseNum ++;
                         String[] array = line.substring(EXERCISE_START.length()).trim().split("\\. ");
-                        Content exercise = new Content(ContentType.EXERCISE, array[0], array[1]);
+                        Content exercise = new Content(
+                                ContentType.EXERCISE, array[0], concatPath(content.getPath(), array[0]), array[1]);
                         exercises.add(exercise);
                     } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() == null
                             && !line.isEmpty()) {
                         exercises.get(exerciseNum).setSolution(line);
                     } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() != null){
-                        Content child = exercises.get(exerciseNum);
-                        child.setSolution(child.getSolution() + "\n" + line);
+                        Content exercise = exercises.get(exerciseNum);
+                        exercise.setSolution(exercise.getSolution() + "\n" + line);
                     }
                 }
             }
@@ -141,12 +147,20 @@ public class ContentUtils {
         }
     }
 
+    private static String concatPath(String path, File file) {
+        return concatPath(path, getId(file.getName()));
+    }
+
+    private static String concatPath(String path, String name) {
+        return path + SEPARATOR_FILE_NAME + name;
+    }
+
     /**
      * 截取文件名中的 ID
      * @param fileName
      * @return
      */
-    public static String getId(String fileName) {
+    private static String getId(String fileName) {
         String[] array = fileName.split(SEPARATOR_FILE_NAME);
         AssertionUtils.isTrue(array.length >= 2, "文件命名格式有误: " + fileName);
         return array[0];

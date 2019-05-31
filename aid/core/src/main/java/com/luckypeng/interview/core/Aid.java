@@ -6,6 +6,11 @@ import com.luckypeng.interview.core.util.ContentUtils;
 import com.luckypeng.interview.core.util.ObjectUtils;
 import org.apache.commons.lang3.RandomUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class Aid {
     private Content content;
 
@@ -15,11 +20,51 @@ public class Aid {
         this.content = ContentUtils.listContent(contentPath);
     }
 
+    /**
+     * 选择不重复的习题
+     * @param size
+     * @return
+     */
+    public List<Content> randomContent(int size) {
+        return randomContent(size, ContentUtils.CONTENT_ROOT_ID);
+    }
+
+    /**
+     * 选择不重复的习题，可指定路径
+     * @param size
+     * @return
+     */
+    public List<Content> randomContent(int size, String exercisePath) {
+        List<Content> contents = new ArrayList<>();
+        Set<String> interviewed = new HashSet<>(100);
+        for (int i = 0; i < size; i++) {
+            Content content = null;
+            while (content == null || interviewed.contains(content.getPath())) {
+                content = randomContent(exercisePath);
+            }
+            interviewed.add(content.getPath());
+            contents.add(content);
+        }
+        return contents;
+    }
+
+    /**
+     * 随机习题
+     * @return
+     */
     public Content randomContent() {
         return randomContent(content);
     }
 
+    /**
+     * 随机习题（可指定路径）
+     * @param exercisePath
+     * @return
+     */
     public Content randomContent(String exercisePath) {
+        if (ContentUtils.CONTENT_ROOT_ID.equals(exercisePath)) {
+            return randomContent(content);
+        }
         String[] paths = exercisePath.split(SEPARATOR_PATH);
         Content tmpContent = content;
         for(String path : paths) {
