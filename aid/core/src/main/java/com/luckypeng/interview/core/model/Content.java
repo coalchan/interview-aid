@@ -1,6 +1,7 @@
 package com.luckypeng.interview.core.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -8,6 +9,7 @@ import java.util.List;
  * @author coalchan
  */
 @Data
+@NoArgsConstructor
 public class Content {
     public static final String FILE_KEY_TITLE = "title";
     public static final String FILE_KEY_DESC = "desc";
@@ -52,4 +54,10 @@ public class Content {
      * 下级
      */
     private List<Content> children;
+
+    public Content(ContentType type, String id, String title) {
+        this.type = type;
+        this.id = id;
+        this.title = title;
+    }
 }
