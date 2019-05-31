@@ -90,13 +90,12 @@ public class ContentUtils {
      * @throws IOException
      */
     public static Content readFile(File file, String path) throws IOException {
-        int exerciseNum = -1;
         boolean isREADME = README_FILE_NAME.equals(file.getName());
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             Content content = new Content();
-            List<Content> exercises = new ArrayList<>(50);
             int separatorNum = 0;
             String line;
+            String exerciseId = null;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(SEPARATOR_LINE)) {
                     separatorNum ++;
@@ -127,22 +126,19 @@ public class ContentUtils {
                     content.setType(ContentType.FILE);
 
                     if (line.startsWith(EXERCISE_START)) {
-                        exerciseNum ++;
                         String[] array = line.substring(EXERCISE_START.length()).trim().split("\\. ");
                         Content exercise = new Content(
                                 ContentType.EXERCISE, array[0], concatPath(content.getPath(), array[0]), array[1]);
-                        exercises.add(exercise);
-                    } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() == null
+                        exerciseId = exercise.getId();
+                        content.getChildren().put(exercise.getId(), exercise);
+                    } else if (!content.getChildren().isEmpty() && content.getChildren().get(exerciseId).getSolution() == null
                             && !line.isEmpty()) {
-                        exercises.get(exerciseNum).setSolution(line);
-                    } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() != null){
-                        Content exercise = exercises.get(exerciseNum);
+                        content.getChildren().get(exerciseId).setSolution(line);
+                    } else if (!content.getChildren().isEmpty() && content.getChildren().get(exerciseId).getSolution() != null){
+                        Content exercise = content.getChildren().get(exerciseId);
                         exercise.setSolution(exercise.getSolution() + "\n" + line);
                     }
                 }
-            }
-            if (!exercises.isEmpty()) {
-                content.setExercises(exercises);
             }
             return content;
         }

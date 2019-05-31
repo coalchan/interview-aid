@@ -1,9 +1,9 @@
 package com.luckypeng.interview.core;
 
 import com.luckypeng.interview.core.model.Content;
+import com.luckypeng.interview.core.model.ContentType;
 import com.luckypeng.interview.core.util.AssertionUtils;
 import com.luckypeng.interview.core.util.ContentUtils;
-import com.luckypeng.interview.core.util.ObjectUtils;
 import lombok.Getter;
 import org.apache.commons.lang3.RandomUtils;
 
@@ -71,12 +71,21 @@ public class Aid {
         if (ContentUtils.CONTENT_ROOT_ID.equals(exercisePath)) {
             return randomContent(content);
         }
+        return randomContent(getContentByPath(exercisePath));
+    }
+
+    /**
+     * 获取指定路径的内容
+     * @param exercisePath
+     * @return
+     */
+    public Content getContentByPath(String exercisePath) {
         String[] paths = exercisePath.split(SEPARATOR_PATH);
         Content tmpContent = content;
         for(String path : paths) {
             tmpContent = tmpContent.getChildren().get(path);
         }
-        return randomContent(tmpContent);
+        return tmpContent;
     }
 
     /**
@@ -85,9 +94,9 @@ public class Aid {
      * @return
      */
     private Content randomContent(Content tmpContent) {
-        if (ObjectUtils.isNotEmpty(tmpContent.getExercises())) {
-            int index = RandomUtils.nextInt(0, tmpContent.getExercises().size());
-            return tmpContent.getExercises().get(index);
+        if (ContentType.FILE.equals(tmpContent.getType())) {
+            int index = RandomUtils.nextInt(1, tmpContent.getChildren().size() + 1);
+            return tmpContent.getChildren().get(String.valueOf(index));
         } else {
             int index = RandomUtils.nextInt(1, tmpContent.getChildren().size() + 1);
             String id = ContentUtils.fixId(index);

@@ -3,6 +3,8 @@ package com.luckypeng.interview.wechat;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.luckypeng.interview.core.Aid;
+import com.luckypeng.interview.core.model.Content;
+import com.luckypeng.interview.core.model.ContentType;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +34,12 @@ public class WeChatInterview {
         return aid.getContent().getRawText();
     }
 
+    public String getHelp() {
+        return getOutline() + "\n"
+                + "操作指南：\n"
+                + "回复'面试'开始面试 ";
+    }
+
     /**
      * 开启会话
      * @return
@@ -48,5 +56,23 @@ public class WeChatInterview {
      */
     public void stopSession(String sessionId) {
         interviewSession.invalidate(sessionId);
+    }
+
+    /**
+     * 获取指定习题
+     * @param path
+     * @return
+     */
+    public String getContent(String path) {
+        Content content = aid.getContentByPath(path);
+        if (!ContentType.EXERCISE.equals(content)) {
+            return content.pretty();
+        } else {
+            return "该习题不存在";
+        }
+    }
+
+    public Content randomContent(String path) {
+        return aid.randomContent(path);
     }
 }

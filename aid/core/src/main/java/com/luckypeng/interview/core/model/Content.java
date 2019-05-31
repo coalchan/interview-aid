@@ -59,11 +59,6 @@ public class Content {
     private String solution;
 
     /**
-     * 习题
-     */
-    private List<Content> exercises;
-
-    /**
      * 下级
      */
     private Map<String, Content> children = new HashMap<>(16);
@@ -73,5 +68,13 @@ public class Content {
         this.id = id;
         this.path = path;
         this.title = title;
+    }
+
+    public String prettyTitle() {
+        return path + "\n" + title;
+    }
+
+    public String pretty() {
+        return path + "\n" + title + "\n\n答案：\n" + solution + "\n";
     }
 }
