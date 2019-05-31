@@ -11,6 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @author coalchan
+ * @since 1.0
+ */
 public class Aid {
     private Content content;
 

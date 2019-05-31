@@ -9,6 +9,7 @@ import java.util.Map;
 
 /**
  * @author coalchan
+ * @since 1.0
  */
 @Data
 @NoArgsConstructor
