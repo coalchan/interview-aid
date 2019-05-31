@@ -7,8 +7,8 @@ package com.luckypeng.interview.core.util;
 public class AssertionUtils {
     private AssertionUtils() {}
 
-    public static void notEmpty(Object obj, String message) {
-        isTrue(!ObjectUtils.isEmpty(obj), message);
+    public static void isNotEmpty(Object obj, String message) {
+        isTrue(ObjectUtils.isNotEmpty(obj), message);
     }
 
     public static void isFalse(boolean bool, String message) {

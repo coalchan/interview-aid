@@ -3,8 +3,13 @@ package com.luckypeng.interview.core.util;
 import com.luckypeng.interview.core.model.Content;
 import com.luckypeng.interview.core.model.ContentType;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author coalchan
@@ -24,7 +29,7 @@ public class ContentUtils {
     private static final String COLON_TAG = ": ";
 
     /**
-     * 题目需要以 ## 为开头
+     * 习题需要以 ## 为开头
      */
     private static final String EXERCISE_START = "## ";
     private static final String README_FILE_NAME = "README.md";
@@ -37,55 +42,47 @@ public class ContentUtils {
     /**
      * 根路径名称
      */
-    private static final String CONTENT_ROOT_ID = "0";
+    public static final String CONTENT_ROOT_ID = "0";
 
     /**
      * 读取所有文件
      * @param contentPath
      * @return
      */
-    public static Map<String, Content> listContent(String contentPath) {
+    public static Content listContent(String contentPath) {
         File contents = new File(contentPath);
         AssertionUtils.isTrue(contents.exists() && contents.isDirectory(), "目录不存在: " + contentPath);
-        Map<String, Content> result = new HashMap<>(1000);
         try {
-            recursionListContents(contents, "", result);
+            return recursionListContents(contents, CONTENT_ROOT_ID);
         } catch (IOException e) {
             throw new RuntimeException("读取文件报错: ", e);
         }
-        return result;
     }
 
     /**
      * 递归读取文件
      * @param contents
-     * @param parentId
-     * @param result
      * @throws IOException
      */
-    public static void recursionListContents(
-            File contents, String parentId, Map<String, Content> result) throws IOException {
-        File[] files = contents.listFiles();
-
+    public static Content recursionListContents(File contents, String parentId) throws IOException {
+        File readmeFile = new File(contents.getAbsolutePath() + File.separator + README_FILE_NAME);
+        AssertionUtils.isTrue(readmeFile.exists(), "文件夹中没有包含 README.md 文件: " + contents.getName());
+        Content content = readFile(readmeFile, parentId);
+        File[] files = contents.listFiles((dir, name) -> !README_FILE_NAME.equals(name));
         for (File file : files) {
             if (file.isFile()) {
-                Content content = readFile(file, parentId);
-                result.put(content.getId().isEmpty() ? CONTENT_ROOT_ID : content.getId(), content);
-                if (ObjectUtils.isNotEmpty(content.getChildren())) {
-                    content.getChildren().forEach(c -> result.put(c.getId(), c));
-                }
+                Content child = readFile(file, parentId);
+                content.getChildren().put(child.getId(), child);
             } else {
-                String currentId = (parentId.isEmpty() ? parentId : parentId + SEPARATOR_FILE_NAME)
-                        + getId(file.getName());
-                recursionListContents(file, currentId, result);
+                content.getChildren().put(getId(file.getName()), recursionListContents(file, getId(file.getName())));
             }
         }
+        return content;
     }
 
     /**
      * 解析文件
      * @param file
-     * @param parentId
      * @return
      * @throws IOException
      */
@@ -94,9 +91,7 @@ public class ContentUtils {
         boolean isREADME = README_FILE_NAME.equals(file.getName());
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             Content content = new Content();
-            // Id 拼接
-            content.setId(isREADME ? parentId : parentId + SEPARATOR_FILE_NAME + getId(file.getName()));
-            List<Content> children = new ArrayList<>(50);
+            List<Content> exercises = new ArrayList<>(50);
             int separatorNum = 0;
             String line;
             while ((line = reader.readLine()) != null) {
@@ -113,6 +108,7 @@ public class ContentUtils {
                     throw new RuntimeException("文件没有标准的文件头");
                 } else if (isREADME) {
                     // 读取 README 文档的正文部分
+                    content.setId(parentId);
                     content.setType(ContentType.DIR);
                     if (content.getRawText() == null && !line.isEmpty()) {
                         content.setRawText(line);
@@ -120,26 +116,26 @@ public class ContentUtils {
                         content.setRawText(content.getRawText() + "\n" + line);
                     }
                 } else {
-                    // 读取普通文档的正文部分，即面试题部分
+                    // 读取普通文档的正文部分，即习题部分
+                    content.setId(getId(file.getName()));
                     content.setType(ContentType.FILE);
 
                     if (line.startsWith(EXERCISE_START)) {
                         exerciseNum ++;
                         String[] array = line.substring(EXERCISE_START.length()).trim().split("\\. ");
-                        Content child = new Content(
-                                ContentType.EXERCISE, content.getId() + SEPARATOR_FILE_NAME + array[0], array[1]);
-                        children.add(child);
-                    } else if (!children.isEmpty() && children.get(exerciseNum).getSolution() == null
+                        Content exercise = new Content(ContentType.EXERCISE, array[0], array[1]);
+                        exercises.add(exercise);
+                    } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() == null
                             && !line.isEmpty()) {
-                        children.get(exerciseNum).setSolution(line);
-                    } else if (!children.isEmpty() && children.get(exerciseNum).getSolution() != null){
-                        Content child = children.get(exerciseNum);
+                        exercises.get(exerciseNum).setSolution(line);
+                    } else if (!exercises.isEmpty() && exercises.get(exerciseNum).getSolution() != null){
+                        Content child = exercises.get(exerciseNum);
                         child.setSolution(child.getSolution() + "\n" + line);
                     }
                 }
             }
-            if (!children.isEmpty()) {
-                content.setChildren(children);
+            if (!exercises.isEmpty()) {
+                content.setExercises(exercises);
             }
             return content;
         }
@@ -154,5 +150,19 @@ public class ContentUtils {
         String[] array = fileName.split(SEPARATOR_FILE_NAME);
         AssertionUtils.isTrue(array.length >= 2, "文件命名格式有误: " + fileName);
         return array[0];
+    }
+
+    /**
+     * 修正 ID，小于 10 的 补 0
+     * @param id
+     * @return
+     */
+    public static String fixId(int id) {
+        AssertionUtils.isTrue(id > 0, "序号必须大于 0");
+        if (id >= 10) {
+            return String.valueOf(id);
+        } else {
+            return "0" + id;
+        }
     }
 }

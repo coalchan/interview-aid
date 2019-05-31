@@ -3,7 +3,9 @@ package com.luckypeng.interview.core.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author coalchan
@@ -51,9 +53,14 @@ public class Content {
     private String solution;
 
     /**
+     * 习题
+     */
+    private List<Content> exercises;
+
+    /**
      * 下级
      */
-    private List<Content> children;
+    private Map<String, Content> children = new HashMap<>(16);
 
     public Content(ContentType type, String id, String title) {
         this.type = type;
